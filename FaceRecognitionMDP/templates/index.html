@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SECURE DOORCAM PROTOCOL</title>
+    <!-- Modern Cyberpunk/Hacker style font -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --text-color: #e0e0e0;
+            --locked-red: #ff3333;
+            --unlocked-green: #33ff33;
+            --panel-bg: #111;
+            --border-color: #333;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Share Tech Mono', monospace;
+            margin: 0;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: var(--text-color);
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            font-size: 2.5rem;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            gap: 25px;
+            max-width: 1500px;
+            width: 100%;
+        }
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-title {
+            font-size: 1.2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        /* TEAM MEMBERS */
+        .member-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .member-item {
+            padding: 12px 10px;
+            background: #1a1a1a;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--unlocked-green);
+            color: var(--unlocked-green);
+            text-transform: uppercase;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* LAST VISITED */
+        .log-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .log-item {
+            padding: 12px 0;
+            border-bottom: 1px dashed #333;
+            font-size: 0.95rem;
+            color: #aaa;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .log-item span.time {
+            color: #666;
+            font-size: 0.85rem;
+        }
+        .log-item span.name {
+            color: var(--text-color);
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--unlocked-green);
+        }
+        
+        /* CENTER PANEL: FEED & DOOR */
+        .center-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #0a0a0a;
+            padding: 2px;
+            border-radius: 8px;
+        }
+        .status-banner {
+            width: 100%;
+            text-align: center;
+            padding: 20px;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+            border-radius: 6px;
+            transition: all 0.4s ease;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            box-sizing: border-box;
+        }
+        .status-locked {
+            color: var(--locked-red);
+            border: 2px solid var(--locked-red);
+            text-shadow: 0 0 15px var(--locked-red);
+            box-shadow: inset 0 0 30px rgba(255, 0, 0, 0.15);
+            background: rgba(255, 0, 0, 0.05);
+        }
+        .status-unlocked {
+            color: var(--unlocked-green);
+            border: 2px solid var(--unlocked-green);
+            text-shadow: 0 0 15px var(--unlocked-green);
+            box-shadow: inset 0 0 30px rgba(0, 255, 0, 0.15);
+            background: rgba(0, 255, 0, 0.05);
+        }
+
+        .camera-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: #050505;
+            border: 2px solid #222;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0,0,0,0.9);
+        }
+        img.live-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        
+        /* DOOR SIMULATION CSS */
+        .door-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            display: flex;
+            z-index: 10;
+        }
+        .door-panel {
+            width: 50%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                45deg,
+                #111,
+                #111 20px,
+                #1a1a1a 20px,
+                #1a1a1a 40px
+            );
+            border: 5px solid var(--locked-red);
+            box-sizing: border-box;
+            transition: transform 1.2s cubic-bezier(0.77, 0, 0.175, 1), border-color 0.5s;
+            position: relative;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.9);
+        }
+        .door-left { border-right: 3px solid var(--locked-red); justify-content: flex-end; }
+        .door-right { border-left: 3px solid var(--locked-red); }
+        
+        .door-label {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            color: var(--locked-red);
+            font-size: 2.5rem;
+            padding: 15px;
+            font-weight: bold;
+            opacity: 0.9;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            transition: color 0.5s;
+        }
+
+        /* OPEN STATE ANIMATIONS */
+        .unlocked .door-left {
+            transform: translateX(-100%);
+            border-color: var(--unlocked-green);
+        }
+        .unlocked .door-right {
+            transform: translateX(100%);
+            border-color: var(--unlocked-green);
+        }
+        .unlocked .door-label {
+            color: var(--unlocked-green);
+        }
+        
+        /* Scanline Overlay over the video feed */
+        .scanlines {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            z-index: 5;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        
+        /* Custom scrollbar for members/logs */
+        .panel { overflow-y: auto; max-height: 75vh; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+    </style>
+</head>
+<body>
+
+    <h1>SYSTEM SETUP</h1>
+
+    <div class="dashboard">
+        <!-- LEFT PANEL -->
+        <div class="panel">
+            <div class="panel-title">AUTHORIZED TEAM</div>
+            <ul class="member-list">
+                {% for person in team %}
+                    <li class="member-item">> {{ person }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- CENTER PANEL -->
+        <div class="center-panel">
+            <div id="status-banner" class="status-banner status-locked">
+                DOOR CLOSED / SYSTEM ARMED
+            </div>
+            
+            <div class="camera-container">
+                <img src="/video_feed" class="live-feed" alt="Camera Feed Offline">
+                <div class="scanlines"></div>
+                
+                <!-- DOOR SIMULATION OVERLAY -->
+                <div id="door-overlay" class="door-overlay">
+                    <div class="door-panel door-left">
+                        <div class="door-label">RESTRICTED</div>
+                    </div>
+                    <div class="door-panel door-right">
+                        <div class="door-label">AREA</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="panel">
+            <div class="panel-title">LAST VISITED</div>
+            <ul id="log-list" class="log-list">
+                <li class="log-item" style="text-align:center;">Initializing...</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function fetchStatus() {
+            try {
+                const response = await fetch('/status');
+                if (!response.ok) return;
+                const data = await response.json();
+                
+                // DOOR STATUS LOGIC
+                const banner = document.getElementById('status-banner');
+                const door = document.getElementById('door-overlay');
+                
+                if (data.door_locked) {
+                    banner.className = 'status-banner status-locked';
+                    banner.innerText = 'DOOR CLOSED / SYSTEM ARMED';
+                    door.classList.remove('unlocked');
+                } else {
+                    banner.className = 'status-banner status-unlocked';
+                    banner.innerText = 'DOOR OPENED / ACCESS GRANTED';
+                    door.classList.add('unlocked');
+                }
+                
+                // UPDATE LAST VISITED LOG
+                const logList = document.getElementById('log-list');
+                if (data.last_visited && data.last_visited.length > 0) {
+                    logList.innerHTML = '';
+                    data.last_visited.forEach(entry => {
+                        const li = document.createElement('li');
+                        li.className = 'log-item';
+                        li.innerHTML = `
+                            <span class="time">[${entry.time}]</span> 
+                            <span class="name">> ${entry.name}</span>
+                        `;
+                        logList.appendChild(li);
+                    });
+                } else if (!data.last_visited || data.last_visited.length === 0) {
+                    if (logList.children.length === 1 && logList.children[0].innerText.includes('Initializing')) {
+                        logList.innerHTML = '<li class="log-item" style="text-align:center;">Awaiting Entry...</li>';
+                    }
+                }
+                
+            } catch (err) {
+                console.error("Status fetch error", err);
+            }
+        }
+        
+        // Poll every 500ms
+        setInterval(fetchStatus, 500);
+        
+        // Initial fetch
+        fetchStatus();
+    </script>
+</body>
+</html>
