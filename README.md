@@ -2,25 +2,11 @@
 
 A professional-grade, real-time facial recognition security system. Built with a high-performance **FastAPI** backend and a stylized **Cyberpunk dashboard**, this system implements strict security logic to manage restricted area access.
 
-![License](https://img.shields.io/badge/Security-Level%204-red)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688?logo=fastapi)
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)
-
----
 
 ## 🛠️ System Architecture
 
 The application utilizes a **Producer-Consumer multi-threaded architecture** to ensure smooth video playback while performing heavy CPU-intensive facial recognition.
 
-```mermaid
-graph TD
-    A[Webcam Feed] -->|Producer| B(Capture Thread)
-    B -->|Raw Frames| C{Shared State}
-    C -->|Consumer| D[Recognition Thread]
-    D -->|Encoded Faces| C
-    C -->|MJPEG Stream| E[FastAPI Web Server]
-    E -->|Socket/Polling| F[Browser Dashboard]
-```
 
 ### Key Components:
 - **Capture Thread**: High-speed frame acquisition (aims for 60 FPS).
