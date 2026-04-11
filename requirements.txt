@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+face-recognition
+opencv-python
+numpy
+jinja2
+python-multipart

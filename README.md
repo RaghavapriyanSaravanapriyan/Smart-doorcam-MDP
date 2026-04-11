@@ -1,65 +1,102 @@
 # 🛡️ Secure Doorcam Live Protocol
-This is my first year Multidisciplinary project for smart authentication based doorcam systems. 
-Implemented by interactive web UI with backend in python using the face_recognition library.
 
-A professional-grade, real-time facial recognition security system featuring a polished web dashboard, automated door simulation, and authorized entry logging.
+A professional-grade, real-time facial recognition security system. Built with a high-performance **FastAPI** backend and a stylized **Cyberpunk dashboard**, this system implements strict security logic to manage restricted area access.
 
-## 🚀 Quick Start Instructions
-
-### 1. Install Dependencies
-Ensure you have Python 3.10+ installed. Open your terminal in this project directory and run:
-
-```bash
-pip install fastapi uvicorn face_recognition opencv-python numpy jinja2
-```
-
-> [!IMPORTANT]
-> This system requires a working webcam. If you have multiple cameras, the system defaults to Camera Index 1 (and falls back to 0).
-
-### 2. Configure Your Team
-Open the `team.txt` file to manage who is allowed access. The format is `Name,ImageFile.jpg`:
-
-```text
-Raghav,raghav.jpg
-Jensen,jensen.jpg
-```
-
-- Ensure the `.jpg` files exist in the root folder.
-- The system will automatically learn these faces on startup.
-
-### 3. Start the Live Server
-Run the main application:
-
-```bash
-python main.py
-```
-
-Look for the link in your terminal: `INFO: Uvicorn running on http://0.0.0.0:8000`.
-
-### 4. Access the Dashboard
-Open your web browser and navigate to:
-👉 **[http://localhost:8000](http://localhost:8000)**
+![License](https://img.shields.io/badge/Security-Level%204-red)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688?logo=fastapi)
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)
 
 ---
 
-## 🔒 Security Logic & Features
+## 🛠️ System Architecture
 
-- **Dynamic Door Simulation**: 
-  - **RED / LOCKED**: If an unknown person or no one is in frame, the "Restricted Area" doors remain shut.
-  - **GREEN / OPENED**: As soon as a recognized team member steps in, the doors slide open and access is granted.
-- **Visual Tracking**: 
-  - **Green Box**: Known team member (Safe).
-  - **Red Box**: Unknown individual (Unauthorized).
-- **Last Visited Log**: A real-time scrolling history of who entered and at what exact time.
-- **MJPEG Live Feed**: High-performance, low-latency video streaming directly in the browser.
+The application utilizes a **Producer-Consumer multi-threaded architecture** to ensure smooth video playback while performing heavy CPU-intensive facial recognition.
 
-## 🛠️ Performance Optimization
-- **1/4 Processing**: To ensure smooth 30+ FPS, the facial recognition engine processes frames at 25% resolution before scaling back up for display.
-- **Dual-Frame Processing**: Face detection runs on every other frame to save CPU cycles while maintaining a smooth visual experience.
+```mermaid
+graph TD
+    A[Webcam Feed] -->|Producer| B(Capture Thread)
+    B -->|Raw Frames| C{Shared State}
+    C -->|Consumer| D[Recognition Thread]
+    D -->|Encoded Faces| C
+    C -->|MJPEG Stream| E[FastAPI Web Server]
+    E -->|Socket/Polling| F[Browser Dashboard]
+```
+
+### Key Components:
+- **Capture Thread**: High-speed frame acquisition (aims for 60 FPS).
+- **Processing Thread**: Decoupled recognition logic using `face_recognition` (Dlib-based).
+- **Grace Period Logic**: Implements a 1-second "unlocked" buffer to prevent jitter.
+- **Strict Security**: Access is only granted if a **Known** member is present **AND** no **Unknown** individuals are in the frame.
+
+---
+
+## 🚀 Installation & Setup
+
+### 1. Prerequisites (Crucial for Windows)
+The core library `face_recognition` depends on `dlib`, which requires C++ compilation.
+1. Install **Visual Studio Build Tools**.
+2. Select "Desktop development with C++".
+3. Install **CMake** (`pip install cmake`).
+
+### 2. Environment Setup
+```bash
+# Clone or enter the directory
+cd FaceRecognitionMDP
+
+# Install core dependencies
+pip install -r requirements.txt
+```
+
+### 3. Configure Authorized Personnel
+Edit `team.txt` to define your security perimeter.
+Format: `Name,ImageFile.jpg`
+```text
+Raghav,raghav.jpg
+Nishanth,nishanth.jpg
+```
+*Ensure the corresponding `.jpg` files are in the root directory.*
+
+### 4. Deploy Server
+```bash
+python main.py
+```
+Dashboard available at: 👉 **[http://localhost:8000](http://localhost:8000)**
+
+---
+
+## 🔒 Security Features
+
+| Feature | Description |
+| :--- | :--- |
+| **Zero-Trust Detection** | If an unknown face enters the frame alongside a team member, the door remains **LOCKED**. |
+| **Dynamic Simulation** | Physical door state is visually simulated with animated sliding panels in the UI. |
+| **Real-time Logging** | Captures arrival times and identity for all recognized personnel. |
+| **Performance Scaling** | Frames are processed at 0.25x scale for low-latency recognition on standard hardware. |
+
+---
+
+## 📁 Project Structure
+
+```text
+FaceRecognitionMDP/
+├── main.py              # Core FastAPI application & Threading logic
+├── team.txt             # Authorization database
+├── requirements.txt     # Python dependencies
+├── templates/
+│   └── index.html       # Cyberpunk UI & Door Simulation
+├── [Name].jpg           # Authorized face source images
+└── README.md            # You are here
+```
+
+---
+
+## ❓ Troubleshooting
+
+- **Camera Not Found**: The system checks Index 1 first (common for external webcams) and falls back to Index 0. Modify `cv2.VideoCapture(index)` in `main.py` if needed.
+- **dlib Compilation Error**: Ensure `CMake` is installed and the C++ Compiler is in your PATH. 
+- **Low FPS**: Ensure you are not running other CPU-heavy background tasks; facial recognition is computationally expensive.
 
 ---
 
 > [!TIP]
-> **Pro Tip:** To add a new team member while the server is running, simply add their name and image path to `team.txt` and restart the `main.py` script. The "authorized" list in the dashboard will update automatically!
-
-LETS GO
+> **Pro Tip:** For maximum security, use high-resolution source images with clear lighting for your team members. The system uses a default tolerance of `0.6` for recognition balance. **
